@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+    <style type="text/css">
+        html
+        {
+            height: 100%;
+        }
+        body
+        {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+        #map_canvas
+        {
+            height: 100%;
+        }
+    </style>
+    <script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC2jI_0GxxRtSBuTEFEk8xyl7aFsbaCQqY&sensor=false"> 
+    </script>
+    <script type="text/javascript">
+        var geocoder;
+        var address;
+        var map;
+
+        function initialize() {
+
+            var mapOptions = {
+                center: new google.maps.LatLng(51.2481, -0.575344),
+                zoom: 17,
+                mapTypeId: google.maps.MapTypeId.HYBRID
+            };
+
+            map = new google.maps.Map(document.getElementById("map_canvas"), mapOptions);
+
+            var myLatLng = new google.maps.LatLng(51.2481, -0.575344);
+
+
+            var marker = new google.maps.Marker({
+                position: myLatLng,
+                title: "Accident Location",
+                map: map,
+                draggable: true
+            });
+            map.setCenter(myLatLng);
+            var markerPosition = marker.getPosition();
+            populateInputs(markerPosition);
+
+            google.maps.event.addListener(marker, "drag", function (mEvent) {
+                populateInputs(mEvent.latLng);
+            });
+                     
+        }
+
+
+        function populateInputs(pos) {
+            //var Latlong = new googlemaps.LatLng(pos.lat(), pos.lng());
+            document.getElementById("Text1").value = pos.lat();
+            document.getElementById("Text2").value = pos.lng();
+            address = codeLatLng(pos);
+            document.getElementById("Text3").value = address;
+        }
+
+        function codeLatLng(pos) {
+//            var lat = pos.lat();
+//            var long = pos.long();
+            //var latlng = new google.maps.LatLng(lat, long);
+            address = "Tits";
+            return address;
+            
+            
+
+
+
+        }
+
+
+    </script>
+</head>
+<body onload="initialize()">
+    Longitude
+    <input type="text" id="Text1" value="" />
+    Latitude
+    <input type="text" id="Text2" value="" />
+    Address 
+    <input type="text" id="Text3" value="" />
+    <div id="map_canvas" style="width: 100%; height: 100%">
+    </div>
+</body>
+</html>

@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+    <style type="text/css">
+        html
+        {
+            height: 100%;
+        }
+        body
+        {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+        #map_canvas
+        {
+            height: 100%;
+        }
+    </style>
+    <script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC2jI_0GxxRtSBuTEFEk8xyl7aFsbaCQqY&sensor=false"> 
+    </script>
+    <script type="text/javascript">
+        // Geocoding solution created and developed by Ian Caddick(2013).
+        
+        
+        // Initialise a load of variables to be used.
+        var geocoder; // Geocoder object
+        var address;
+        var map;
+        var marker;
+        var infoWnd;
+        var directionsService;
+        var directionsDisplay;
+        var accidentMarkerLatLong;
+        var selectedRepairerLongLat;
+        var searchString;
+        var geocodeResults;
+
+
+        // Address variables.  These are variables set from the results set of the geocoder.  
+        // they were a pain in the arse to track down in a horrible 3d array of the JSON object.
+        // treat them kindly.
+        var addLookup;
+        var addRoute;
+        var addPostalTown;
+        var addAddress1;
+        var addAddress2;
+        var addAddress3;
+        var addCity;
+        var addCounty;
+        var addPostCode;
+        var addCountry;
+
+        // Function to initialise the page as we want it. 
+
+        function initialize() {
+
+            var params = getUrlParams();
+            window.moveTo(0, 0);
+            window.resizeTo(screen.width, screen.height);
+            var myLatLng = new google.maps.LatLng(51.2481, -0.575344);
+
+
+            if (params.id == 1) {
+                var myLatLng = new google.maps.LatLng(params.lat, params.long);
+                document.getElementById("Address1").value = params.address1;
+                document.getElementById("Address2").value = params.address2;
+                document.getElementById("Address3").value = params.address3;
+                document.getElementById("City").value = params.city;
+                document.getElementById("County").value = params.county;
+                document.getElementById("PostCode").value = params.postcode;
+                document.getElementById("Country").value = params.country;
+                resetAddressVariables();
+                var mapOptions = {
+                    center: myLatLng,
+                    zoom: 17,
+                    mapTypeId: google.maps.MapTypeId.HYBRID
+                };
+                map = new google.maps.Map(document.getElementById("map_canvas"), mapOptions);
+                geocoder = new google.maps.Geocoder();
+
+                marker = new google.maps.Marker({
+                    position: myLatLng,
+                    title: "Accident Location",
+                    map: map,
+                    draggable: true
+                });
+
+                map.setCenter(myLatLng);
+                var markerPosition = marker.getPosition();
+                populateInputs(markerPosition);
+
+                google.maps.event.addListener(marker, "drag", function (mEvent) {
+                    populateInputs(mEvent.latLng);
+                });
+
+                google.maps.event.addListener(marker, "dragend", function (event) {
+
+                    codeLatLng(event.latLng);
+
+                });
+            }
+            else if(params.id == 2){
+                var myLatLng = new google.maps.LatLng(53, -1);
+
+                resetAddressVariables();
+                var mapOptions = {
+                    center: myLatLng,
+                    zoom: 6,
+                    mapTypeId: google.maps.MapTypeId.HYBRID
+                };
+                map = new google.maps.Map(document.getElementById("map_canvas"), mapOptions);
+                geocoder = new google.maps.Geocoder();
+
+                marker = new google.maps.Marker({
+                    position: myLatLng,
+                    title: "Accident Location",
+                    map: map,
+                    draggable: true
+                });
+
+                map.setCenter(myLatLng);
+                var markerPosition = marker.getPosition();
+                populateInputs(markerPosition);
+
+                google.maps.event.addListener(marker, "drag", function (mEvent) {
+                    populateInputs(mEvent.latLng);
+                });
+
+                google.maps.event.addListener(marker, "dragend", function (event) {
+
+                    codeLatLng(event.latLng);
+
+                });
+            }
+            else if(params.id == 3){
+                var myLatLng = new google.maps.LatLng(53, -1);
+                document.getElementById("Address1").value = params.address1;
+                document.getElementById("Address2").value = params.address2;
+                document.getElementById("Address3").value = params.address3;
+                document.getElementById("City").value = params.city;
+                document.getElementById("County").value = params.county;
+                document.getElementById("PostCode").value = params.postcode;
+                document.getElementById("Country").value = params.country;
+
+                var searchString = params.address1 + ' ' +
+                                    params.address2 + ' ' +
+                                    params.address3 + ' ' +
+                                    params.city + ' ' +
+                                    params.county + ' ' +
+                                    params.postcode + ' ' +
+                                    params.country;
+                alert(searchString);
+                document.getElementById("Search").value = searchString;
+
+                resetAddressVariables();
+                var mapOptions = {
+                    center: myLatLng,
+                    zoom: 17,
+                    mapTypeId: google.maps.MapTypeId.HYBRID
+                };
+                map = new google.maps.Map(document.getElementById("map_canvas"), mapOptions);
+                geocoder = new google.maps.Geocoder();
+
+                marker = new google.maps.Marker({
+                    position: myLatLng,
+                    title: "Accident Location",
+                    map: map,
+                    draggable: true
+                });
+
+                map.setCenter(myLatLng);
+                var markerPosition = marker.getPosition();
+                populateInputs(markerPosition);
+
+                google.maps.event.addListener(marker, "drag", function (mEvent) {
+                    populateInputs(mEvent.latLng);
+                });
+
+                google.maps.event.addListener(marker, "dragend", function (event) {
+
+                    codeLatLng(event.latLng);
+
+                });
+
+                codeAddress();
+            }
+            else if (params.id == 4) {
+
+                  var params = getUrlParams();
+                window.moveTo(0, 0);
+                window.resizeTo(screen.width, screen.height);
+                
+                
+                var myLatLng = new google.maps.LatLng(params.lat, params.long);
+
+                
+                    var myLatLng = new google.maps.LatLng(params.lat, params.long);
+                    document.getElementById("Address1").value = params.address1;
+                    document.getElementById("Address2").value = params.address2;
+                    document.getElementById("Address3").value = params.address3;
+                    document.getElementById("City").value = params.city;
+                    document.getElementById("County").value = params.county;
+                    document.getElementById("PostCode").value = params.postcode;
+                    document.getElementById("Country").value = params.country;
+                    resetAddressVariables();
+                    
+                    
+                    var mapOptions = {
+                        center: myLatLng,
+                        zoom: 17,
+                        mapTypeId: google.maps.MapTypeId.HYBRID
+                    };
+                    map = new google.maps.Map(document.getElementById("map_canvas"), mapOptions);
+                    geocoder = new google.maps.Geocoder();
+
+                    marker = new google.maps.Marker({
+                        position: myLatLng,
+                        title: "Location",
+                        map: map,
+                        draggable: false
+                    });
+
+                    map.setCenter(myLatLng);
+                    var markerPosition = marker.getPosition();
+                    populateInputs(markerPosition);
+
+
+                    document.getElementById("Search").disabled = true;
+                                        document.getElementById("btnSearch").disabled = true;
+                    document.getElementById("Address1").disabled = true;
+                    document.getElementById("Address2").disabled = true;
+                    document.getElementById("Address3").disabled = true;
+                    document.getElementById("City").disabled = true;
+                    document.getElementById("County").disabled = true;
+                    document.getElementById("PostCode").disabled = true;
+                    document.getElementById("Country").disabled = true;
+
+
+               
+                
+            }
+        }
+
+
+        // got this function off of the internet, I kind of know how the regular expression works but it just works 
+        // so I will just leave it here. The job is to get the inputs from the URL parameter and then open the page 
+        // in the correct mode. 
+        function getUrlParams() {
+            var params = {};
+            window.location.search.replace(/[?&]+([^=&]+)=([^&]*)/gi, function (str, key, value) {
+                params[key] = value;
+            });
+
+            return params;
+        }
+
+
+
+        // function to populate the positions of the accident marker. 
+        function populateInputs(pos) {
+            document.getElementById("Long").value = pos.lat();
+            document.getElementById("Lat").value = pos.lng();
+            accidentMarkerLatLong = new google.maps.LatLng(pos.lat(), pos.lng());
+
+        }
+
+        function codeLatLng(pos) {
+                    var myLatLng = new google.maps.LatLng(pos.lat(), pos.lng());
+                    getAddress(myLatLng);           
+                    return pos;
+        }
+
+
+
+
+        // Function to calculate the first line of an address from the results set returned by
+        // google's geocoder.  This will either be of a geocoding type of street address or route.
+        // we only need up to the first element of this. The element also contains the post code prefix
+        // the city name and country.  
+        function populateAddressFields() {
+            resetAddressFields();
+            document.getElementById("Address1").value += addAddress1;
+            document.getElementById("Address2").value += addAddress2;
+            document.getElementById("Address3").value += addAddress3;
+            document.getElementById("City").value += addCity;
+            document.getElementById("County").value += addCounty;
+            document.getElementById("PostCode").value += addPostCode;
+            document.getElementById("Country").value += addCountry;
+
+            resetAddressVariables();
+        }
+
+        function resetAddressFields() {
+            
+            document.getElementById("Address1").value = "";
+            document.getElementById("Address2").value = "";
+            document.getElementById("Address3").value = "";
+            document.getElementById("City").value = "";
+            document.getElementById("County").value = "" ;
+            document.getElementById("PostCode").value = "";
+            document.getElementById("Country").value = "";
+        }
+
+        function resetAddressVariables() {
+            addAddress1 = "";
+            addAddress2 = "";
+            addAddress3 = "";
+            addCity = "";
+            addCounty = "";
+            addCountry = "";
+            addPostCode = "";
+        }
+
+
+        //Old Functions
+
+
+       
+
+        
+
+        function getAddress(latLng) {
+            geocoder.geocode({ 'latLng': latLng },
+
+          function (results, status) {
+              if (status == google.maps.GeocoderStatus.OK) {
+
+                  if (results[0]) {
+                      //geocodeResults = results;
+                      // **IPC document.getElementById("Text3").value = "";
+                     
+//   **IPC                   for (var i = 0; i < results.length; i++) {
+//                          document.getElementById("Text3").value += results[i].formatted_address;
+//                      }
+
+
+                      // loop throught the results set initially this will get all componenty parts of the JSON object.
+                      // But then we have to loop through each of the component parts.  these all have a type, for example "street_number".
+                      // these can then access the individual parts that make up an address. without this we only have a full formatted address.
+                      // yes it is long winded, but try and work out by hand what each on is then come back to me and talk about how long winded
+                      // you think it is.
+                    
+
+                      for (var i = 0; i < results[0].address_components.length; i++) {
+                          for (var b = 0; b < results[0].address_components[i].types.length; b++) {
+                             if (results[0].address_components[i].types[b] == "street_number") {
+
+                                  addLookup = results[0].address_components[i];
+                                  addAddress1 += addLookup.long_name;
+                                  addAddress1 += " ";
+                                  break;
+
+                              }
+                              if (results[0].address_components[i].types[b] == "route") {
+                                  addLookup = results[0].address_components[i];
+                                  addAddress1 += addLookup.long_name;
+
+                              }
+                              if (results[0].address_components[i].types[b] == "postal_town") {
+                                  addLookup = results[0].address_components[i];
+                                  addAddress2 += addLookup.long_name;
+
+                              }
+                              if (results[0].address_components[i].types[b] == "administrative_area_level_3") {
+                                  addLookup = results[0].address_components[i];
+                                  addCity += addLookup.long_name;
+                              }
+
+                              if (results[0].address_components[i].types[b] == "administrative_area_level_2") {
+                                  addLookup = results[0].address_components[i];
+                                  addCounty += addLookup.long_name;
+
+                              }
+                              if (results[0].address_components[i].types[b] == "postal_code") {
+                                  addLookup = results[0].address_components[i];
+                                  addPostCode += addLookup.long_name;
+                                  
+                              }
+                              if (results[0].address_components[i].types[b] == "country") {
+                                  addLookup = results[0].address_components[i];
+                                  addCountry += addLookup.long_name;
+
+                              }
+
+                          }
+                      }
+
+
+                      populateAddressFields();
+
+                  }
+                  else {
+                      document.getElementById("Address1").value = "No results";
+                  }
+              }
+              else {
+                  document.getElementById("Address1").value = "Cads Error " + status;
+              }
+          }
+        );
+      }
+
+      // This function takes a partial address from the search bar and returns an address for that search criteria.
+      // The attribute 'region' is specified as UK.  This looks the search to only returning those results which are from the uk. 
+      // It also gives the most appropriate lat long for the address and sets the marker there. 
+      function codeAddress() {
+          var address = document.getElementById("Search").value;
+          geocoder.geocode({ 'address': address, region: 'uk' }, function (results, status) {
+              if (status == google.maps.GeocoderStatus.OK) {
+                  map.setCenter(results[0].geometry.location);
+
+                  marker.setPosition(results[0].geometry.location);
+                  document.getElementById("Long").value = results[0].geometry.location.lng();
+                  document.getElementById("Lat").value = results[0].geometry.location.lat();
+                  getAddress(results[0].geometry.location);
+                  map.setZoom(17);
+              } else {
+                  alert("Geocode was not successful for the following reason: " + status);
+              }
+          });
+      }
+
+      function homeOnMarker() {
+          map.setCenter(marker.getPosition()); 
+      }
+
+          function closePop() {
+              var parentAddress1 = window.opener.document.getElementById('Address1');
+              var parentAddress2 = window.opener.document.getElementById('Address2');
+              var parentAddress3 = window.opener.document.getElementById('Address3');
+              var parentCity = window.opener.document.getElementById('City');
+              var parentCounty = window.opener.document.getElementById('County');
+              var parentPostCode = window.opener.document.getElementById('PostCode');
+              var parentLong = window.opener.document.getElementById('Long');
+              var parentLat = window.opener.document.getElementById('Lat');
+
+              parentAddress1.value = document.getElementById("Address1").value;
+              parentAddress2.value = document.getElementById("Address2").value;
+              parentAddress3.value = document.getElementById("Address3").value;
+              parentCity.value = document.getElementById("City").value;
+              parentLong.value = document.getElementById("Long").value;
+              parentLat.value = document.getElementById("Lat").value;
+              
+              
+              this.close();
+
+          }
+
+    </script>
+</head>
+<body onload="initialize()">
+    <div>
+    <img src="Images/header_bg.png" 
+            alt="A descriptive text of the image" style="height: 35px; width: 100% "  />
+    </Div>
+
+    <div style="text-align:center"><input type="text" id="Search" value="" size="50" />
+    <input type="button" id="btnSearch" value="Search" onclick="codeAddress()"><br />
+    </BR></Div>
+    <div id="map_canvas" style="width: 70%; height: 90%; float: right;"></div>
+    </BR>
+    </BR>
+  
+    </br>
+
+    Address 1 <input type="text" id="Address1" value="" /></BR>
+    Address 2 <input type="text" id="Address2" value="" /></BR>
+    Address 3 <input type="text" id="Address3" value="" /></BR>
+    City      <input type="text" id="City" value="" /></BR> 
+    County    <input type="text" id="County" value="" /></BR>
+    Post Code <input type="text" id="PostCode" value="" /></BR>
+    Country   <input type="text" id="Country" value="" /></BR>
+    Location  <input type="text" id="LocationCode" value="" /></BR>
+    Longitude <input type="text" id="Long" value="" /></BR>
+    Latitude  <input type="text" id="Lat" value="" /></BR>
+    </BR>
+
+    <input type="button" value="Locate Pin" onclick="homeOnMarker()"><br />
+
+    <input type="button" value="Close and Pop" onclick="closePop()"><br />
+ 
+    <input type="button" value="Save Map" onclick="saveMap()">
+
+
+    </div>
+</body>
+</html>

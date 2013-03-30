@@ -1,0 +1,264 @@
+﻿
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>Mapperz UK Reverse Geocoding - using Google Maps API </title>
+
+<center><h1><a href="http://mapperz.blogspot.com" target="_blank">Mapperz UK Reverse Geocoding - Google Maps API </h1></center>
+
+<script type="text/javascript"><!--
+    google_ad_client = "pub-1022738694169855";
+    google_ad_width = 728;
+    google_ad_height = 90;
+    google_ad_format = "728x90_as";
+    google_ad_type = "text_image";
+    google_ad_channel = "";
+    google_ui_features = "rc:6";
+//-->
+</script>
+
+    <script src="http://maps.google.com/maps?file=api&amp;v=2.x&amp;key=ABQIAAAA0BUFyOfwPEjCYiQYWzGTaxTo0p2usznQoW9L5dnx7CnkQVj6KRT5ESMEtYomba-5AwPZZNZUUoz02w" type="text/javascript"></script>
+
+    <script type="text/javascript">
+
+        // Example reverse geocoding code, using the Google Maps API only.
+        // Author Nico.Goeminne@UGent.be (modified by Mapperz for UK)
+
+        // The algorithm :
+        //  1. Select the GLatLng point and save it in a variable. (See lastpoint)
+        //  2. Use the GDirections without a html counterpart,
+        //     use it to find a road between the the point and itself:
+        //      gdir.loadFromWaypoints(lastpoint, lastpoint)
+        //  3. Using Route, Steps, get the last step, this returns something like
+        //      "East on <b>SOMEROAD.</b>
+        //  4. Cut out SOMEROAD and use it in the GClientGeocoder
+        //      (in combination with a country location, obtained for example
+        //      by the browers regional settings) -> e.g.  SOMEROAD Belgium
+        //  5. This returns a number of matches (Placemarks)
+        //      Someroad, city 1, belgium, latlng point
+        //      Someroad, city 2, belguim, latlng point
+        //      ...
+        //  6. Use the distance between the original saved latlngpoint and each
+        //     candidate, and select the one with minimum distance (and for example
+        //     check if the distances is at least less then 1 km)
+        //  7. Display the selected location and adress on the map.
+
+        //<![CDATA[
+
+        var map = null;        // the GMap
+        var gdir = null;       // the GDirections
+        var geocoder = null;   // the GClientGeoCoder
+        var lastpoint = null;  // the GLatLng point we try to reverse geocode
+
+
+
+
+
+        // this method sets up the map, gdrir and geocoder
+        function load() {
+            if (GBrowserIsCompatible()) {
+                map = new GMap2(document.getElementById("map"));
+                map.addControl(new GLargeMapControl());
+                map.setCenter(new GLatLng(51.500152, -0.126236), 15);
+                // GDirections without html counterpart.
+                gdir = new GDirections();
+                geocoder = new GClientGeocoder();
+
+                GEvent.addListener(map, "click", handleClicks);
+                GEvent.addListener(gdir, "load", onGDirectionsLoad);
+                GEvent.addListener(gdir, "error", handleErrors);
+            }
+        }
+
+
+        function handleClicks(marker, point) {
+            // 1. Select the GLatLng point and save it in a variable
+            // when the user clicks on the map
+            lastpoint = point;
+            // Set the geocoder viewport to reduce the number of results later on (optional)
+            geocoder.setViewport(map.getBounds());
+
+            // delete the marker if it is there (previously reversed geocoded)
+            if (marker) {
+                map.removeOverlay(marker);
+            }
+            else {
+                // clear the GDirections from previouse load requests.
+                gdir.clear();
+                // 2. Use it to find a road between the the point and itself
+                //    Be sure to set the geSteps true, to obtain all the steps
+                //    The locale is not important, the result will be in dutch saying
+                //      Oost on <b>someroad</b> or if you use en_US it will be
+                //      Turn east on <b>someroad</b>
+                var way = ([point, point]);
+                gdir.loadFromWaypoints(way, { getSteps: true, locale: "GB" });
+            }
+        }
+
+
+        //  3. Using Route, Steps, get the last step
+        function onGDirectionsLoad() {
+            var nrroutes = gdir.getNumRoutes();
+            if (nrroutes != 0) {
+                var route = gdir.getRoute(0);
+                var nrsteps = route.getNumSteps();
+                if (nrsteps != 0) {
+                    var step = route.getStep(0);
+                    // 4. returns "Turn east on <b>someroad</b>", so cut out the street
+                    // and use it in the GClientGeocoder
+                    var street = getStreet(step.getDescriptionHtml());
+                    // The GClientGeoCoder sometimes performs better if we cut out Road, Rd, Rue, Avenue, Way, ...
+                    // -> This should be the "Did you mean" function
+                    street = generalize(street);
+                    // TODO : Should detect the country e.g. by browser region settings
+                    street = street + " UK"
+                    // just checking the street (todo remove alert)
+                    //alert(street);
+                    geocoder.getLocations(street, refine);
+                }
+            }
+        }
+
+
+        // cuts out the street from the step.getDescriptionHtml()
+        // If the street is a highway the surrounding tags are <wbr> instead of <b>
+        function getStreet(str) {
+            var street = str.substring(str.lastIndexOf("<b>") + 3, str.lastIndexOf("</b>"));
+            if (street.lastIndexOf("/<wbr/>") > 0) {
+                street = street.substring(0, street.lastIndexOf("/<wbr/>"));
+            }
+            return street;
+        }
+
+
+        // Not used right now
+        function generalize(street) {
+            //  var temp = street.replace(/straat/,"");
+            //  temp = temp.replace(/sesteenweg/,"");
+            //  temp = temp.replace(/steenweg/,"");
+            //  temp = temp.replace(/weg/,"");
+            //  temp = temp.replace(/laan/,"");
+            //  temp = temp.replace(/rue/,"");
+            return street;
+        }
+
+
+        //  5. This returns a number of matches (Placemarks)
+        //      Someroad, city 1, belgium, latlng point
+        //      Someroad, city 2, belguim, latlng point
+        function refine(response) {
+            if (!response || response.Status.code != 200) {
+                alert("Sorry, we were unable to geocode that address");
+            }
+            else {
+                //  6. Use the distance between the original saved latlngpoint and each
+                //     candidate, and select the one with minimum distance.
+                var place = getBestMatchingPlacemark(response);
+                //  7. Display the selected location and adress on the map.
+                if (place != null) {
+                    var point = new GLatLng(place.Point.coordinates[1], place.Point.coordinates[0]);
+                    var icon = new GMarker(lastpoint, { draggable: true });
+                    icon.image = "http://labs.google.com/ridefinder/images/mm_20_red.png";
+                    icon.shadow = "http://labs.google.com/ridefinder/images/mm_20_shadow.png";
+                    icon.iconSize = new GSize(12, 20);
+                    icon.shadowSize = new GSize(22, 20);
+                    icon.iconAnchor = new GPoint(6, 20);
+                    icon.infoWindowAnchor = new GPoint(5, 1);
+                    document.getElementById("message").innerHTML = lastpoint.toString();
+                    map.addOverlay(icon);
+                    icon.openInfoWindowHtml(place.address + '<br>' + '<b>Country code:</b> ' + place.AddressDetails.Country.CountryNameCode);
+                    document.getElementById("address").innerHTML = place.address + '<br>' + '<b>Country code:</b> ' + place.AddressDetails.Country.CountryNameCode.toString();
+                }
+                else {
+                    //alert("Sorry, we were unable to geocode that address");
+                }
+            }
+        }
+
+
+        //  6. Use the distance between the original saved latlngpoint and each
+        //     candidate, and select the one with minimum distance.
+        function getBestMatchingPlacemark(response) {
+            var i = 0;
+            var j = -1;
+            // the result should be at least within 1 km.
+            var mindist = 1000;
+            for (i = 0; i < response.Placemark.length; i++) {
+                var place = response.Placemark[i];
+                // Just listing the posibilties (todo : remove alert)
+                alert(place.address);
+                var point = new GLatLng(place.Point.coordinates[1], place.Point.coordinates[0]);
+                var temp = lastpoint.distanceFrom(point);
+                if (temp < mindist) {
+                    j = i;
+                    mindist = temp;
+                }
+            }
+            if (j < 0) return null;
+            return response.Placemark[j];
+        }
+
+
+        // handle GDirection errors
+        function handleErrors() {
+            if (gdir.getStatus().code == G_GEO_UNKNOWN_ADDRESS)
+                alert("No corresponding geographic location could be found for one of the specified addresses. This may be due to the fact that the address is relatively new, or it may be incorrect.\nError code: " + gdir.getStatus().code);
+            else if (gdir.getStatus().code == G_GEO_SERVER_ERROR)
+                alert("A geocoding or directions request could not be successfully processed, yet the exact reason for the failure is not known.\n Error code: " + gdir.getStatus().code);
+
+            else if (gdir.getStatus().code == G_GEO_MISSING_QUERY)
+                alert("The HTTP q parameter was either missing or had no value. For geocoder requests, this means that an empty address was specified as input. For directions requests, this means that no query was specified in the input.\n Error code: " + gdir.getStatus().code);
+
+            //  else if (gdir.getStatus().code == G_UNAVAILABLE_ADDRESS)  <--- Doc bug... this is either not defined, or Doc is wrong
+            //    alert("The geocode for the given address or the route for the given directions query cannot be returned due to legal or contractual reasons.\n Error code: " + gdir.getStatus().code);
+
+            else if (gdir.getStatus().code == G_GEO_BAD_KEY)
+                alert("The given key is either invalid or does not match the domain for which it was given. \n Error code: " + gdir.getStatus().code);
+
+            else if (gdir.getStatus().code == G_GEO_BAD_REQUEST)
+                alert("A directions request could not be successfully parsed.\n Error code: " + gdir.getStatus().code);
+
+            else alert("An unknown error occurred.");
+
+        }
+
+        //]]>
+    </script>
+  </head>
+
+  <body onload="load()" onunload="GUnload()">
+
+    <center>
+      <div id="map" style="width: 800px; height: 600px; position: relative;"></div>
+    </left>
+  <body onload="load()" onunload="GUnload()">
+
+<script type="text/javascript"><!--
+    google_ad_client = "pub-1022738694169855";
+    google_ad_width = 728;
+    google_ad_height = 90;
+    google_ad_format = "728x90_as";
+    google_ad_type = "text_image";
+    google_ad_channel = "";
+    google_ui_features = "rc:6";
+//-->
+</script>
+<script type="text/javascript"
+  src="http://pagead2.googlesyndication.com/pagead/show_ads.js">
+</script>
+<li>Click on the Map to Reverse Geocode a UK Address</a>
+<li>Alerts finds all adresses in the UK with that Streetname (can be switched off)</a>
+<li>Map Extent is used to return a marker of the Address on the Map</a>
+
+<p>Reverse Geocoded Point is:</p>
+<div id="message">(51.516514, -0.1342822)</div>
+<div id="address">(Street,Town,Area,Postcode,Country)</div>
+
+  </body>
+<p><a href="http://mapperz.blogspot.com" target="_blank">Mapperz Blog (News on Map and GIS Stuff)</p>
+<p><a href="http://nicogoeminne.googlepages.com/reversegeocode.html" target="_blank">Full Credit to Nico Goeminne</a></p>
+<li>Uses the Google Maps Directions so limited to 10,000 requests per day</a>
+
+</html>
+
+  </body>
+</html>

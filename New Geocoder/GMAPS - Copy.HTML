@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+    <style type="text/css">
+        html
+        {
+            height: 100%;
+        }
+        body
+        {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+        #map_canvas
+        {
+            height: 100%;
+        }
+    </style>
+    <script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC2jI_0GxxRtSBuTEFEk8xyl7aFsbaCQqY&sensor=false"> 
+    </script>
+    <script type="text/javascript">
+        // Geocoding solution created and developed by Ian Caddick(2013).
+        // Initialise a load of variables.
+
+
+
+        var geocoder;
+        var address;
+        var map;
+        var marker;
+        var infoWnd;
+        var directionsService;
+        var directionsDisplay;
+        var accidentMarkerLongLat;
+        var selectedRepairerLongLat;
+
+        function initialize() {
+
+            var mapOptions = {
+                center: new google.maps.LatLng(51.2481, -0.575344),
+                zoom: 16,
+                mapTypeId: google.maps.MapTypeId.HYBRID
+            };
+
+            map = new google.maps.Map(document.getElementById("map_canvas"), mapOptions);
+            geocoder = new google.maps.Geocoder();
+
+            var myLatLng = new google.maps.LatLng(51.2481, -0.575344);
+
+            marker = new google.maps.Marker({
+                position: myLatLng,
+                title: "Accident Location",
+                map: map,
+                draggable: true
+            });
+            map.setCenter(myLatLng);
+            var markerPosition = marker.getPosition();
+            populateInputs(markerPosition);
+
+            google.maps.event.addListener(marker, "drag", function (mEvent) {
+                populateInputs(mEvent.latLng);
+            });
+
+            google.maps.event.addListener(marker, "dragend", function (event) {
+                
+                codeLatLng(event.latLng);
+
+            });
+
+            infoWnd = new google.maps.InfoWindow();
+
+            directionsService = new google.maps.DirectionsService();
+            directionsDisplay = new google.maps.DirectionsRenderer();
+            directionsDisplay.setMap(map);
+            directionsDisplay.setPanel(document.getElementById('panel'));
+       
+        }
+
+
+        function populateInputs(pos) {
+            document.getElementById("Text1").value = pos.lat();
+            document.getElementById("Text2").value = pos.lng();
+            accidentMarkerLongLat = new google.maps.LatLng(pos.lat(), pos.lng());
+           
+        }
+
+        function codeLatLng(pos) {
+            var myLatLng = new google.maps.LatLng(pos.lat(), pos.lng());
+            getAddress(myLatLng);
+            
+            return pos;
+
+
+        }
+
+        function getAddress(latLng) {
+            geocoder.geocode({ 'latLng': latLng },
+          function (results, status) {
+              if (status == google.maps.GeocoderStatus.OK) {
+                  document.getElementById("Text3").value = "geocodestatus ok";
+                  if (results[0]) {
+                      document.getElementById("Text3").value = results[0].formatted_address;
+                      for (var i = 0; i < results.length; i++) {
+                         document.getElementById("Text3").value += results[i].formatted_address;
+                      }
+                  }
+                  else {
+                      document.getElementById("Text3").value = "No results";
+                  }
+              }
+              else {
+                  document.getElementById("Text3").value = "Cads Error " + status;
+              }
+          }
+        );
+      }
+
+      function codeAddress() {
+          var address = document.getElementById("Text6").value;
+          geocoder.geocode({ 'address': address, region: 'uk' }, function (results, status) {
+              if (status == google.maps.GeocoderStatus.OK) {
+                  map.setCenter(results[0].geometry.location);
+                  marker.setPosition(results[0].geometry.location);
+                  document.getElementById("Text4").value = results[0].geometry.location.lat();
+                  document.getElementById("Text5").value = results[0].geometry.location.lng();
+              } else {
+                  alert("Geocode was not successful for the following reason: " + status);
+              }
+          });
+      }
+
+      function addRepairers() {
+          var marker1 = new google.maps.Marker({
+              position: new google.maps.LatLng(51.24746200333506, -0.5776721574248995),
+              title: "Repairer 1",
+              map: map,
+              draggable: false
+          });
+        
+          google.maps.event.addListener(marker1, "mouseover", function () {
+              infoWnd.setContent("Cads Repair Shop,</BR>Springside Ct, </BR>Guildford, </BR>Surrey, </BR>GU1 1DL");
+              infoWnd.open(map, marker1);
+          });
+
+          google.maps.event.addListener(marker1, "mouseout", function () {
+              infoWnd.close();
+          });
+
+          var marker2 = new google.maps.Marker({
+              position: new google.maps.LatLng(51.2493155270444, -0.5789703465881075),
+              title: "Repairer 2",
+              map: map,
+              draggable: false
+          });
+
+          
+        
+          google.maps.event.addListener(marker2, "mouseover", function () {
+              infoWnd.setContent("Serenas Mechanic Shop,</BR>Europa Park Rd, </BR>Guildford, </BR>Surrey, </BR>GU1 1AZ");
+              infoWnd.open(map, marker2);
+          });
+
+        google.maps.event.addListener(marker2, "mouseout", function () {
+                        infoWnd.close();
+                    });
+
+
+          var marker3 = new google.maps.Marker({
+              position: new google.maps.LatLng(51.24666281607789, -0.5707306004943575),
+              title: "Repairer 3",
+              map: map,
+              draggable: false
+          });
+
+          google.maps.event.addListener(marker3, "mouseover", function () {
+              infoWnd.setContent("Luke Fixes Stuff,</BR>Lido Road, </BR>Guildford, </BR>Surrey, </BR>GU1 3LH");
+              infoWnd.open(map, marker3);
+          });
+          google.maps.event.addListener(marker3, "mouseout", function () {
+              infoWnd.close();
+          });
+
+          google.maps.event.addListener(marker1, "click", function () {
+              document.getElementById("Text7").value = "Cads Repair Shop";
+              marker1.setMap(null);
+              marker2.setMap(null);
+              marker3.setMap(null);
+              selectedRepairerLongLat = new google.maps.LatLng(51.24746200333506, -0.5776721574248995);
+          });
+
+          google.maps.event.addListener(marker2, "click", function () {
+              document.getElementById("Text7").value = "Serenas Mechanic Shop";
+              marker1.setMap(null);
+              marker2.setMap(null);
+              marker3.setMap(null);
+              selectedRepairerLongLat = new google.maps.LatLng(51.2493155270444, -0.5789703465881075);
+          });
+
+          google.maps.event.addListener(marker3, "click", function () {
+              document.getElementById("Text7").value = "Luke Fixes Stuff";
+              marker1.setMap(null);
+              marker2.setMap(null);
+              marker3.setMap(null);
+              selectedRepairerLongLat = new google.maps.LatLng(51.24666281607789, -0.5707306004943575);
+          });
+      }
+
+      function getDirections() {
+
+              var request = {
+                  origin: accidentMarkerLongLat,
+                  destination: selectedRepairerLongLat,
+                  travelMode: google.maps.DirectionsTravelMode.DRIVING
+              };
+
+              directionsService.route(request, function (response, status) {
+                  if (status == google.maps.DirectionsStatus.OK) {
+                      directionsDisplay.setDirections(response);
+                  }
+              }); 
+          
+      }
+
+    </script>
+</head>
+<body onload="initialize()">
+    <div>
+    <img src="Images/logo.gif" alt="A descriptive text of the image" 
+            style="height: 35px; width: 18%" /><img src="Images/header_bg.gif" 
+            alt="A descriptive text of the image" style="height: 35px; width: 82% "  />
+    </Div>
+
+    
+    <div id="map_canvas" style="width: 800px; height: 100%; float: left;"></div>
+    <div id="panel" style="width: 300px; float: right;"></div> 
+
+    Geocoding from Pin Drop</br>
+
+    Longitude
+    <input type="text" id="Text1" value="" />
+    Latitude
+    <input type="text" id="Text2" value="" />
+    Address 
+    <input type="text" id="Text3" value="" /></br>
+    
+    Geocoding from address</br>
+    Address 
+    <input type="text" id="Text6" value="" />
+    Longitude
+    <input type="text" id="Text4" value="" />
+    Latitude
+    <input type="text" id="Text5" value="" />
+    <input type="button" value="Encode" onclick="codeAddress()">
+    </br>
+
+    <input type="button" value="Add Repairers" onclick="addRepairers()">
+    <input type="text" id="Text7" value="" />
+    </BR>
+
+    <input type="button" value="Get Directions" onclick="getDirections()">
+    <input type="text" id="Text8" value="" />
+    </BR>
+
+
+ 
+
+
+
+
+    </div>
+</body>
+</html>

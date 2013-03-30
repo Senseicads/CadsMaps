@@ -1,0 +1,111 @@
+﻿<HTML>
+<HEAD>
+<TITLE>Imagine I am ClaimCentre</TITLE>
+<script type="text/javascript">
+<!--
+
+    // Function to open the googlemaps window as a normal window and make pass all the variables as URL parameters.
+    function GoToGoogleMaps() {
+      
+        window.location.href = "GMAPS.html?long=41.24746200333506&lat=-0.4776721574248995";
+    }
+
+
+    // Function to open the Geocoding window as a dialog window and make it repopulate using an array.
+    function openWindow(option) {
+        var claimref = document.getElementById("ClaimRef").value;
+        var long = document.getElementById("Long").value;
+        var lat = document.getElementById("Lat").value;
+        var address1 = document.getElementById("Address1").value;
+        var address2 = document.getElementById("Address2").value;
+        var address3 = document.getElementById("Address3").value;
+        var city = document.getElementById("City").value;
+        var county = document.getElementById("County").value;
+        var country = document.getElementById("Country").value;
+        var postcode = document.getElementById("PostCode").value;
+
+
+        if (option == 1) {
+            w = open('GMAPS.html?id=1&claimref=' + claimref +
+                      '&long=' + long +
+                      '&lat=' + lat +
+                      '&address1=' + address1 +
+                      '&address2=' + address2 +
+                      '&address3=' + address3 +
+                      '&city=' + city +
+                      '&county=' + county +
+                      '&postcode=' + postcode +
+                      '&country=' + country
+                , 'Geocoding');
+        }
+        else if (option == 2) {
+            var claimref = document.getElementById("ClaimRef").value;
+            w = open('GMAPS.html?id=2&claimref=' + claimref);
+
+        }
+        else if (option == 3) {
+            w = open('GMAPS.html?id=3&claimref=' + claimref +
+                      '&long=' + long +
+                      '&lat=' + lat +
+                      '&address1=' + address1 +
+                      '&address2=' + address2 +
+                      '&address3=' + address3 +
+                      '&city=' + city +
+                      '&county=' + county +
+                      '&postcode=' + postcode +
+                      '&country=' + country
+                , 'Geocoding');
+        }
+        else if (option == 4) {
+            w = open('GMAPS.html?id=4&claimref=' + claimref +
+                      '&long=' + long +
+                      '&lat=' + lat +
+                      '&address1=' + address1 +
+                      '&address2=' + address2 +
+                      '&address3=' + address3 +
+                      '&city=' + city +
+                      '&county=' + county +
+                      '&postcode=' + postcode +
+                      '&country=' + country
+                , 'Geocoding');
+        }
+        else {
+        }
+    }
+
+//-->
+</script>
+</HEAD>
+<BODY>
+
+<form name="ClaimCentre">
+
+Imagine I am Claim Centre</P>
+    Claim Reference Number
+    <input type="text" id="ClaimRef" value="MK1555123" />
+    Longitude
+    <input type="text" id="Long" value="-1" />
+    Latitude
+    <input type="text" id="Lat" value="53" /></br>
+    Address 1 <input type="text" id="Address1" value="" /></br>
+    Address 2 <input type="text" id="Address2" value="" /></br>
+    Address 3 <input type="text" id="Address3" value="" /></br>
+    City      <input type="text" id="City" value="" /></br> 
+    County    <input type="text" id="County" value="" /></br>
+    Post Code <input type="text" id="PostCode" value="" /></br>
+    Country   <input type="text" id="Country" value="" /></br>
+    Location  <input type="text" id="LocationCode" value="" /></br>
+
+</p>
+<p>Open previous accident location.  Pin in place from Long Lat.</BR>
+<input type="button" value="Open" onClick="openWindow(1);" /></BR>
+Open Brand New Accident location with no address details added.</BR>
+<input type="button" value="Open" onClick="openWindow(2);" /></BR>
+Open Brand New Accident location with address details added.</BR>
+<input type="button" value="Open" onClick="openWindow(3);" /></BR>
+open non editable address from previously calculated long lat.</BR>
+<input type="button" value="Open" onClick="openWindow(4);" /></BR>
+</p>
+</form>
+</BODY>
+</HTML>
